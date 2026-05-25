@@ -1,0 +1,57 @@
+@startuml
+' Диаграмма последовательности для команды parakeet-install
+title Выполнение полного цикла установки (configure -> build -> install)
+
+actor Пользователь as User
+participant "ParakeetCLI" as CLI
+participant "ConfigManager" as Config
+participant "KernelConfigurator" as Conf
+participant "KernelBuilder" as Build
+participant "KernelInstaller" as Inst
+participant "BootDevice" as Dev
+
+User -> CLI: parakeet-install
+activate CLI
+
+CLI -> Config: load_config(path)
+activate Config
+Config --> CLI: config object
+deactivate Config
+
+CLI -> Conf: configure(linux_dir, backup_dir)
+activate Conf
+Conf -> Conf: backup old .config
+Conf -> Conf: run make nconfig (interactive)
+Conf --> CLI: OK
+deactivate Conf
+
+CLI -> Build: build(linux_dir, jobs)
+activate Build
+Build -> Build: make bzImage modules -jN
+Build --> CLI: build successful
+deactivate Build
+
+CLI -> Inst: install(config, devices)
+activate Inst
+
+Inst -> Inst: create temp directory
+Inst -> Inst: make install & genkernel to temp
+
+loop for each flash device
+    Inst -> Dev: new BootDevice(device, partition, mountpoint)
+    activate Dev
+    Inst -> Dev: mount()
+    Inst -> Dev: copy_kernel_files(temp_dir)
+    Inst -> Dev: update_grub()
+    Inst -> Dev: install_grub()
+    Inst -> Dev: umount()
+    deactivate Dev
+end
+
+Inst -> Inst: make modules_install
+Inst --> CLI: installation complete
+deactivate Inst
+
+CLI --> User: report success / errors
+deactivate CLI
+@enduml

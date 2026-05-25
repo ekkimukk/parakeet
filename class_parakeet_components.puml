@@ -1,0 +1,65 @@
+@startuml
+title Диаграмма классов модуля управления ядром (Parakeet)
+
+class ParakeetCLI {
+    - config: Config
+    - configurator: KernelConfigurator
+    - builder: KernelBuilder
+    - installer: KernelInstaller
+    + run(): void
+}
+
+class Config {
+    - data: dict
+    + load(path: str): Config
+    + get_flash_devices(): list
+    + get_kernel_params(): dict
+    + get(key: str, default: any): any
+}
+
+class KernelConfigurator {
+    + configure(linux_dir: str, backup_dir: str): bool
+    - backup_config(src: str, dst_dir: str): void
+}
+
+class KernelBuilder {
+    + build(linux_dir: str, jobs: int): bool
+    - is_built(): bool
+}
+
+class KernelInstaller {
+    - temp_dir: str
+    + install(config: Config, devices: list): bool
+    - prepare_temp_dir(): str
+    - install_modules(): void
+}
+
+class BootDevice {
+    - device: str
+    - partition: str
+    - mountpoint: str
+    + mount(): void
+    + umount(): void
+    + copy_kernel_files(temp_dir: str): void
+    + update_grub(): void
+    + install_grub(): void
+}
+
+class Logger {
+    - log_file: str
+    + info(msg: str): void
+    + error(msg: str): void
+    + command(cmd: list): void
+}
+
+ParakeetCLI --> Config : uses
+ParakeetCLI --> KernelConfigurator : uses
+ParakeetCLI --> KernelBuilder : uses
+ParakeetCLI --> KernelInstaller : uses
+KernelInstaller --> BootDevice : creates and manages (1..*)
+ParakeetCLI ..> Logger : uses
+KernelConfigurator ..> Logger : uses
+KernelBuilder ..> Logger : uses
+KernelInstaller ..> Logger : uses
+BootDevice ..> Logger : uses
+@enduml
