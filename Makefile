@@ -7,7 +7,6 @@ install:
 	@mkdir -p $(INSTALL_DIR)
 	@ln -sf "$(CURDIR)/$(SCRIPT_NAME)" "$(INSTALL_DIR)/$(COMMAND_NAME)"
 	@echo "Installed: $(INSTALL_DIR)/$(COMMAND_NAME) -> $(CURDIR)/$(SCRIPT_NAME)"
-	@echo "  export PATH=\$$HOME/.local/bin:\$$PATH"
 
 uninstall:
 	@rm -f "$(INSTALL_DIR)/$(COMMAND_NAME)"
