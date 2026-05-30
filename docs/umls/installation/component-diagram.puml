@@ -1,0 +1,58 @@
+@startuml
+' Диаграмма компонентов установщика
+title Диаграмма компонентов установщика ядра
+
+' Определение компонентов
+component "CLI (main)" as CLI
+component "Config" as Config
+component "Logger" as Logger
+component "Kernel" as Kernel
+component "BootDevice" as BootDevice
+
+' Внешние системы (акторы)
+actor "Пользователь" as User
+database "Файл конфигурации\n(kernel_builder.json)" as ConfigFile
+component "make" as Make
+component "genkernel" as Genkernel
+component "grub-mkconfig" as Grub
+component "mount/umount" as Mount
+
+' Интерфейсы
+interface "IConfig" as IConfig
+interface "ILogger" as ILogger
+interface "IKernel" as IKernel
+interface "IBootDevice" as IBootDevice
+
+' Связи между компонентами
+CLI --> Config : uses
+CLI --> Kernel : creates/uses
+CLI --> BootDevice : creates
+
+Config ..> IConfig : provides
+Config --> Logger : uses
+Config --> ConfigFile : reads
+
+Kernel ..> IKernel : provides
+Kernel --> Logger : uses
+Kernel --> Make : calls (make bzImage, modules)
+Kernel --> Genkernel : calls (genkernel initramfs)
+
+BootDevice ..> IBootDevice : provides
+BootDevice --> Logger : uses
+BootDevice --> Mount : calls (mount/umount)
+BootDevice --> Grub : calls (grub-mkconfig)
+
+User --> CLI : invokes (configure, build, install)
+
+Logger ..> ILogger : provides
+
+' Артефакты (исполняемые файлы)
+artifact "parakeet-install.py" as Script
+artifact "kernel.elf" as KernelImage
+artifact "initramfs.img" as Initramfs
+
+Script --> CLI : implements
+KernelImage <-- Make : produces
+Initramfs <-- Genkernel : produces
+
+@enduml
